@@ -86,7 +86,7 @@ def labels(clustering_matrix):
 def gaussian_kernel(coordinates_mm):
     """Compute the Gaussian kernel matrix of the voxel coordinates.
 
-    The kernel width sigma is the median pairwise distance between voxels (median heuristic), so the kernel width scales with
+    Choice: sigma is the median pairwise distance between voxels (median heuristic), so the kernel width scales with
     the cluster size without parameter tuning.
     """
     distances = pdist(coordinates_mm, metric="euclidean")
@@ -101,7 +101,7 @@ def gaussian_kernel(coordinates_mm):
 def number_of_parts_by_eigengap(kernel, max_parts):
     """Estimate the number of clusters with the eigengap heuristic.
 
-    The number of clusters is the position of the largest gap between consecutive eigenvalues of the symmetric
+    Choice: the number of clusters is the position of the largest gap between consecutive eigenvalues of the symmetric
     normalised Laplacian L = I - D^(-1/2) K D^(-1/2), between 1 and max_parts (von Luxburg 2007). An estimate of 1
     leaves the cluster undivided.
     """
