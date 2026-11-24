@@ -6,7 +6,7 @@ The procedure follows Buergi et al. (2026), who derived their network from a Neu
   3. spectral clustering of each cluster (spectral_clustering.py): number of clusters by eigengap, then KNSC-Ncut
   4. region labels from the AAL3 area with the largest overlap (Rolls et al. 2020); repeated labels are numbered
      _1, _2, ...
-The spectral clusters are used as regions without manual recombination. With the default settings, the script
+Choice: the spectral clusters are used as regions without manual recombination. With the default settings, the script
 reproduces atlas/ voxel for voxel.
 
 Any thresholded map can be used as input.
@@ -27,7 +27,7 @@ from scipy import ndimage
 
 from spectral_clustering import ALPHA, METHODS, MU, gaussian_kernel, knsc_clustering, number_of_parts_by_eigengap
 
-MIN_CLUSTER_VOXELS = 50   # Clusters with more than 50 voxels, as in Buergi et al. ("k > 50")
+MIN_CLUSTER_VOXELS = 50   # Choice: clusters with more than 50 voxels, as in Buergi et al. ("k > 50")
 
 
 def read_arguments():
