@@ -1,15 +1,13 @@
 """Risk network atlas: regions from a Neurosynth meta-analysis map, divided by spectral clustering.
 
-The procedure follows Buergi et al. (2026), who derived their network from Neurosynth: "connected clusters with
-k > 50 ... we used spectral clustering to break apart connected areas ... and anatomical information from automated
-anatomical labeling to ... assign labels". Steps:
+The procedure follows Buergi et al. (2026), who derived their network from a Neurosynth map. Steps:
   1. Neurosynth uniformity-test map for "risky" (FDR 0.01; Yarkoni et al. 2011)
   2. clusters of connected suprathreshold voxels (6-connectivity) with more than 50 voxels
   3. spectral clustering of each cluster (spectral_clustering.py): number of clusters by eigengap, then KNSC-Ncut
   4. region labels from the AAL3 area with the largest overlap (Rolls et al. 2020); repeated labels are numbered
      _1, _2, ...
-Choice: the spectral clusters are used as regions without manual anatomical recombination (Buergi et al. recombined
-clusters manually). With the default settings, the script reproduces atlas/ voxel for voxel.
+The spectral clusters are used as regions without manual recombination. With the default settings, the script
+reproduces atlas/ voxel for voxel.
 
 Any thresholded map can be used as input.
 Outputs: <name>_atlas.nii.gz (regions numbered 1 to N) and <name>_atlas_regions.csv with one row per region: number,
@@ -29,7 +27,7 @@ from scipy import ndimage
 
 from spectral_clustering import ALPHA, METHODS, MU, gaussian_kernel, knsc_clustering, number_of_parts_by_eigengap
 
-MIN_CLUSTER_VOXELS = 50   # Choice: clusters with more than 50 voxels, as in Buergi et al. ("k > 50")
+MIN_CLUSTER_VOXELS = 50   # Clusters with more than 50 voxels, as in Buergi et al. ("k > 50")
 
 
 def read_arguments():
