@@ -1,0 +1,12 @@
+numpy>=1.26
+scipy>=1.11
+pandas>=2.1
+nibabel>=5.0
+scikit-learn>=1.4
+statsmodels>=0.14
+matplotlib>=3.8
+nilearn>=0.10
+# preprocessing of raw BIDS data; FSL topup from an FSL installation or install_topup() in task_weighted_networks.py
+antspyx>=0.4
+templateflow>=24.0
+# choice models (choice_models/): bambi for RNP; bauer and PyMC for nu1
