@@ -16,7 +16,7 @@ Option 1 (default), preprocessing of the raw BIDS data:
     python task_weighted_networks.py --bids ds007508 --out networks --participants 07 11
 Option 2, fMRIPrep outputs (fMRIPrep run with --output-spaces MNI152NLin2009cAsym:res-2 --dummy-scans 3):
     python task_weighted_networks.py --bids ds007508 --fmriprep ds007508/derivatives/fmriprep --out networks
-For other datasets, adapt the study design below. Comments starting with "Choice:" document methodological choices.
+For other datasets, adapt the study design below.
 """
 import argparse
 import json
@@ -37,18 +37,18 @@ from scipy.interpolate import CubicSpline
 OPENNEURO_URL = "https://s3.amazonaws.com/openneuro.org/ds007508"
 TASK = "task"                          # BIDS task label of the risky-choice runs
 SESSIONS = {"3t": "3t2", "7t": "7t2"}    # risky-choice sessions
-ANAT_SESSION = "3t1"                   # Choice: the 1 mm T1w image of session 3t1 is used for both sessions
+ANAT_SESSION = "3t1"                   # The 1 mm T1w image of session 3t1 is used for both sessions
 RUNS = list(range(1, 9))               # 8 runs with 24 trials each
 PARTICIPANTS = [f"{number:02d}" for number in range(2, 33) if number != 24]   # 30 participants
-DUMMY_VOLUMES = 3                      # Choice: discard the first 3 volumes, as in de Hollander et al. (--dummy-scans 3)
+DUMMY_VOLUMES = 3                      # Discard the first 3 volumes, as in de Hollander et al. (--dummy-scans 3)
 FIELDMAP_DIRECTIONS = ("RL", "LR")     # reverse phase-encoding EPI directions (BIDS dir- label), in order of preference
-TEMPLATE = "MNI152NLin2009cAsym"       # Choice: default fMRIPrep template, as in de Hollander et al. and Buergi et al.
+TEMPLATE = "MNI152NLin2009cAsym"       # Default fMRIPrep template, as in de Hollander et al. and Buergi et al.
 # The repetition time is read from the BIDS sidecar of each run (2.2979 s at 3T, with small differences between runs).
 
-# Choice: volumes are weighted by the first payoff (0.6 s), the phase in which de Hollander et al. located the
+# Volumes are weighted by the first payoff (0.6 s), the phase in which de Hollander et al. located the
 # magnitude representation in the right intraparietal cortex.
 WEIGHTING_EVENT = "stimulus 1"
-# Choice: all four task phases are regressed out (HRF-convolved, with first differences), corresponding to the removal
+# All four task phases are regressed out (HRF-convolved, with first differences), corresponding to the removal
 # of task effects in CONN (Buergi et al.: "session and task effects and their first-order derivatives").
 NUISANCE_EVENTS = ["stimulus 1", "stimulus 2", "choice", "certainty"]
 
@@ -71,17 +71,17 @@ def layer_name(layer):
     return f"order-{order}_safe-{safe_payoff:02d}"
 
 
-TARGET_LABEL = "Parietal_Inf_R"         # Choice: right inferior parietal target region (de Hollander et al.)
+TARGET_LABEL = "Parietal_Inf_R"         # Right inferior parietal target region (de Hollander et al.)
 SESSION_7T = SESSIONS["7t"]            # session covariate when a prediction includes both sessions
 
 # ================================================================ method settings (Buergi et al. 2026; CONN)
-N_COMPCOR = 5                  # Choice: 5 CompCor components per tissue (Buergi et al.; CONN default)
-LOW_HZ, HIGH_HZ = 0.01, 0.10   # Choice: band-pass 0.01-0.1 Hz (Buergi et al.; CONN default 0.008-0.09 Hz)
-SMOOTHING_FWHM_MM = 6.0        # Choice: 6 mm smoothing kernel for the smoothed version, as in Buergi et al.
-# Choice: T1w-to-template registration with ANTs SyN on skull-stripped images, as in fMRIPrep
+N_COMPCOR = 5                  # 5 CompCor components per tissue (Buergi et al.; CONN default)
+LOW_HZ, HIGH_HZ = 0.01, 0.10   # Band-pass 0.01-0.1 Hz (Buergi et al.; CONN default 0.008-0.09 Hz)
+SMOOTHING_FWHM_MM = 6.0        # 6 mm smoothing kernel for the smoothed version, as in Buergi et al.
+# T1w-to-template registration with ANTs SyN on skull-stripped images, as in fMRIPrep
 REGISTRATION = "antsRegistrationSyN[s]"
 RANDOM_SEED = 20260922                    # fixed seed for ANTs registration and segmentation
-SEGMENTATION_CLIP_PERCENTILES = (1.0, 99.0)   # Choice: T1w intensities clipped before segmentation (ANTsPyNet default)
+SEGMENTATION_CLIP_PERCENTILES = (1.0, 99.0)   # T1w intensities clipped before segmentation (ANTsPyNet default)
 # Quality limits: plausible tissue fractions (young adults) and minimum mask sizes on the 2 mm grid; processing of a
 # participant stops outside these limits.
 TISSUE_FRACTION_RANGE = {"csf": (0.05, 0.35), "gm": (0.30, 0.65), "wm": (0.20, 0.55)}
@@ -150,7 +150,7 @@ def preprocess_anatomy(t1_path, space):
     t1_to_template = registration["fwdtransforms"]
     time_registration = time.time()
 
-    # Choice: three tissue classes by k-means segmentation (ANTs Atropos, MRF weight 0.2), ordered by intensity:
+    # Three tissue classes by k-means segmentation (ANTs Atropos, MRF weight 0.2), ordered by intensity:
     # CSF < grey matter < white matter
     inside_brain = brain_mask.numpy() > 0
     intensities = t1.numpy()
@@ -173,7 +173,7 @@ def preprocess_anatomy(t1_path, space):
     def eroded_mask_on_grid(probability):
         """Threshold a tissue probability map at 0.5, erode it by one voxel and transform it to the atlas grid.
 
-        Choice: threshold and erosion in T1w space, as in the CONN default settings.
+        Threshold and erosion in T1w space, as in the CONN default settings.
         """
         eroded_mask = ants.iMath(ants.threshold_image(probability, 0.5, 1.0e9), "ME", 1)
         on_grid = ants.apply_transforms(fixed=atlas_ants, moving=eroded_mask, transformlist=t1_to_template,
@@ -226,7 +226,7 @@ def distortion_correction(corrected_path, reference_path, fieldmap_path, bold_me
 
     The field is estimated from the mean BOLD image and the mean reverse phase-encoding EPI and applied to the
     motion-corrected run.
-    Choice: FSL topup with the standard b02b0 configuration (Andersson et al. 2003), the PEPOLAR approach of fMRIPrep.
+    FSL topup with the standard b02b0 configuration (Andersson et al. 2003), the PEPOLAR approach of fMRIPrep.
     """
     folder.mkdir(parents=True, exist_ok=True)
     reference = nib.load(str(reference_path)); fieldmap_image = nib.load(str(fieldmap_path))
@@ -285,7 +285,7 @@ def preprocess_run(run_files, anatomy, space, folder, dummy_volumes, fsl_folder=
     n_volumes = bold.shape[3]
     folder.mkdir(parents=True, exist_ok=True)
 
-    # Choice: slice-timing correction if the sidecar contains slice times (3T data; the 7T sidecars contain none)
+    # Slice-timing correction if the sidecar contains slice times (3T data; the 7T sidecars contain none)
     slice_times = np.asarray(bold_metadata.get("SliceTiming", []), dtype=float)
     if slice_times.size == bold.shape[2]:
         bold, reference_time = slice_timing_correction(bold, slice_times, repetition_time)
@@ -295,7 +295,7 @@ def preprocess_run(run_files, anatomy, space, folder, dummy_volumes, fsl_folder=
     del bold
     step_times = {"slice_timing": time.time()}
 
-    # Choice: rigid motion correction to the mean volume of the run (ANTs BOLDRigid); framewise displacement from ANTs,
+    # Rigid motion correction to the mean volume of the run (ANTs BOLDRigid); framewise displacement from ANTs,
     # used for quality control only
     bold_ants = ants.image_read(str(folder / "stc.nii.gz"))
     volumes = ants.ndimage_to_list(bold_ants)
@@ -324,7 +324,7 @@ def preprocess_run(run_files, anatomy, space, folder, dummy_volumes, fsl_folder=
             log(f"distortion correction failed ({error}); continuing without distortion correction")
     step_times["distortion_correction"] = time.time()
 
-    # Choice: rigid registration of the mean EPI to the T1w image (mutual information); fMRIPrep uses boundary-based
+    # Rigid registration of the mean EPI to the T1w image (mutual information); fMRIPrep uses boundary-based
     # registration, which requires FreeSurfer surfaces.
     corrected = ants.image_read(str(corrected_path))
     corrected_volumes = ants.ndimage_to_list(corrected)
@@ -337,7 +337,7 @@ def preprocess_run(run_files, anatomy, space, folder, dummy_volumes, fsl_folder=
     transforms = anatomy["t1_to_template"] + bold_to_t1["fwdtransforms"]
     step_times["coregistration"] = time.time()
     # The BOLD -> T1w -> template transforms are composed into one displacement field on the atlas grid, so that each
-    # volume is resampled only once. Choice: Lanczos windowed-sinc interpolation (as in fMRIPrep).
+    # volume is resampled only once. Lanczos windowed-sinc interpolation (as in fMRIPrep).
     to_atlas_grid_field = ants.apply_transforms(fixed=atlas_ants, moving=corrected_volumes[0], transformlist=transforms,
                                                 compose=str(folder / "to_grid_"))
     if to_atlas_grid_field is None:
@@ -372,7 +372,7 @@ def read_fmriprep_run(fmriprep_folder, participant, session, task, run, template
     """Read one preprocessed fMRIPrep run (template space) on the atlas grid, without the dummy volumes.
 
     Returns the BOLD data, the framewise displacement, the repetition time and a summary.
-    Choice: the fMRIPrep output in MNI152NLin2009cAsym at res-2 shares the voxel lattice of the atlas grid and is
+    The fMRIPrep output in MNI152NLin2009cAsym at res-2 shares the voxel lattice of the atlas grid and is
     re-indexed without interpolation; other grids are resampled once (Lanczos windowed sinc).
     """
     participant_folder = Path(fmriprep_folder) / f"sub-{participant}"
@@ -420,7 +420,7 @@ def to_atlas_grid(image, space, volumes=slice(None)):
 def fmriprep_tissue_masks(fmriprep_folder, participant, template, space, erosion_voxels=1):
     """Compute white matter and CSF masks on the atlas grid from the fMRIPrep tissue probability maps.
 
-    Choice: the rule of option 1 (CONN default): probability > 0.5, erosion by one voxel on the grid of the probability
+    The rule of option 1 (CONN default): probability > 0.5, erosion by one voxel on the grid of the probability
     map, linear interpolation to the atlas grid and threshold 0.5.
     """
     ants = ants_library()
@@ -460,7 +460,7 @@ def spm_hrf(repetition_time, oversampling=16, length_s=32.0):
     """Return the SPM canonical haemodynamic response function (HRF), normalised to unit sum.
 
     The HRF is sampled every repetition_time / oversampling seconds.
-    Choice: SPM default parameters (peak at 6 s, undershoot at 16 s, peak-to-undershoot ratio 6) and 16 microtime bins
+    SPM default parameters (peak at 6 s, undershoot at 16 s, peak-to-undershoot ratio 6) and 16 microtime bins
     per volume, as in SPM and CONN (Friston et al. 1998).
     """
     step = repetition_time / oversampling
@@ -488,7 +488,7 @@ def convolved_boxcar(n_volumes, repetition_time, onsets, durations, oversampling
 def task_weights(n_volumes, repetition_time, onsets, durations, oversampling=16):
     """Compute the connectivity weight of each volume: the rectified, HRF-convolved event boxcar.
 
-    Choice: rectification as in Buergi et al. ("convolved with an SPM canonical HRF and rectified").
+    Rectification as in Buergi et al. ("convolved with an SPM canonical HRF and rectified").
     The weights are sampled at the start of each volume (microtime bin 0).
     """
     rectified = np.maximum(convolved_boxcar(n_volumes, repetition_time, onsets, durations, oversampling), 0.0)
@@ -503,7 +503,7 @@ def task_regressor(n_volumes, repetition_time, onsets, durations, oversampling=1
 def nuisance_task_regressors(events, n_volumes, repetition_time):
     """Compute the session regressor and one regressor per task phase (columns: session, then NUISANCE_EVENTS).
 
-    Choice: the session regressor is a boxcar over the whole run convolved with the HRF (the CONN effect of session),
+    The session regressor is a boxcar over the whole run convolved with the HRF (the CONN effect of session),
     which models the signal increase at the start of each run.
     """
     regressors = [task_regressor(n_volumes, repetition_time, [0.0], [n_volumes * repetition_time])]
@@ -542,7 +542,7 @@ def compcor(bold, mask, n_components=N_COMPCOR):
     """Compute CONN-style CompCor regressors for one tissue mask.
 
     The regressors are the mean signal within the mask and the n - 1 largest principal components orthogonal to it.
-    Choice: as in Buergi et al. ("the average BOLD signal as well as the largest principal components orthogonal to the
+    As in Buergi et al. ("the average BOLD signal as well as the largest principal components orthogonal to the
     BOLD average within each participant's eroded segmentation masks"; Behzadi et al. 2007).
     """
     voxel_signals = bold[mask].T.astype(float)                  # time x voxels
@@ -567,7 +567,7 @@ def nuisance_design(confounds, task_effects, n_components=N_COMPCOR):
 
     Columns: constant, white matter and CSF CompCor components, each task regressor with its first difference, and a
     linear trend.
-    Choice: no motion regressors and no scrubbing, as in the connectivity denoising of Buergi et al.; the CONN default
+    No motion regressors and no scrubbing, as in the connectivity denoising of Buergi et al.; the CONN default
     adds 12 realignment regressors. Head motion is handled by excluding participants with the stringent criteria of
     Parkes et al. (2018) in paper_results.py.
     """
@@ -599,7 +599,7 @@ def remove_nuisance(signals, design):
 def band_pass(signals, repetition_time, low_hz=LOW_HZ, high_hz=HIGH_HZ):
     """Band-pass filter the time series.
 
-    Choice: second-order Butterworth filter applied forward and backward (zero phase, which avoids a temporal shift
+    Second-order Butterworth filter applied forward and backward (zero phase, which avoids a temporal shift
     relative to the task weights), after the nuisance regression, as in Buergi et al.
     """
     nyquist_hz = 0.5 / repetition_time
@@ -613,7 +613,7 @@ def region_signals(bold, atlas, voxel_size_mm, n_regions, smoothing_fwhm_mm=SMOO
     """Compute the regional time series (time x regions): the mean signal of each region, with optional Gaussian
     smoothing.
 
-    Choice: unsmoothed data (smoothing_fwhm_mm=0), the CONN default for regional time series, because smoothing
+    Unsmoothed data (smoothing_fwhm_mm=0), the CONN default for regional time series, because smoothing
     mixes signal between neighbouring regions; the 6 mm version is a robustness check.
     """
     if smoothing_fwhm_mm is not None and smoothing_fwhm_mm > 0:
@@ -638,7 +638,7 @@ def clean_run(bold_on_grid, framewise_displacement, events, repetition_time, spa
     """
     n_volumes = bold_on_grid.shape[3]
     atlas, n_regions = space["atlas"], space["n_regions"]
-    # Choice: CompCor is restricted to voxels within the EPI field of view, defined by a mean signal above 10% of the
+    # CompCor is restricted to voxels within the EPI field of view, defined by a mean signal above 10% of the
     # robust maximum (99th percentile within the template brain mask); at least 100 voxels per tissue are required.
     mean_bold = bold_on_grid.mean(axis=3)
     in_field_of_view = mean_bold > 0.1 * np.percentile(mean_bold[space["brain_on_grid"]], 99)
@@ -703,7 +703,7 @@ def network_from_signals(signals, weights):
     """Compute the region-by-region network of Fisher z-transformed weighted correlations, with an empty diagonal.
 
     Buergi et al.: "Fisher-transformed bivariate correlation coefficients from a weighted general linear model".
-    Choice: correlations are clipped at +-0.999999 before the Fisher transform, which keeps z finite (|z| <= 7.25).
+    Correlations are clipped at +-0.999999 before the Fisher transform, which keeps z finite (|z| <= 7.25).
     """
     n_regions = signals.shape[1]
     network = np.zeros((n_regions, n_regions), dtype=float)
@@ -719,7 +719,7 @@ def network_from_signals(signals, weights):
 def network_from_runs(signals_per_run, weights_per_run):
     """Compute one network from several runs by concatenating their time series and weights.
 
-    Choice: each run is denoised separately and the runs are then concatenated, so that all trials of a condition
+    Each run is denoised separately and the runs are then concatenated, so that all trials of a condition
     contribute equally; per-run networks are not averaged.
     """
     return network_from_signals(np.concatenate(signals_per_run, axis=0), np.concatenate(weights_per_run, axis=0))
