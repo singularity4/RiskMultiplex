@@ -6,12 +6,12 @@ Behavioural data: risk_experiment/paper/behavioral_data in github.com/gilles86/r
 RNP   hierarchical Bayesian probit model 'probit_simple' of de Hollander et al. (Methods, eq. 9-10):
           chose_risky ~ x + (x | subject),   x = log(n_risky / n_safe),   Bambi default priors, per session
       RNP = clip(exp(intercept / slope), 0, 1) for each participant and posterior draw.
-      RNP is the measure of risk attitude, as in de Hollander et al.: the safe/risky payoff ratio at which a
+      Choice: RNP is the measure of risk attitude, as in de Hollander et al.: the safe/risky payoff ratio at which a
       participant is indifferent, which equals the winning probability at which a risk-neutral decision maker would be
       indifferent. The true winning probability is 0.55; RNP = 0.55 indicates risk neutrality, lower values indicate
       risk aversion and higher values risk seeking.
 nu1   perceptual magnitude-comparison model (PMCM), model 1 of de Hollander et al., fitted per session.
-      nu1, the noise of the first-payoff magnitude representation, is the PMCM parameter used in this study.
+      Choice: nu1, the noise of the first-payoff magnitude representation, is the PMCM parameter used in this study.
 The compare step compares both measures with the source data published by the authors and writes
 choice_model_fits.tsv.
 
