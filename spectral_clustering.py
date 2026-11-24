@@ -1,22 +1,21 @@
 """Spectral clustering of voxel clusters into regions, used by risk_brain_network_atlas.py.
 
-Buergi et al. (2026) divided connected clusters of a Neurosynth map with spectral clustering but did not specify the
-algorithm. For each cluster, this module computes:
+For each cluster of connected voxels, the module computes:
     kernel              Gaussian kernel of the voxel coordinates (MNI, mm), K_ij = exp(-d_ij^2 / sigma^2)
     number of clusters  position of the largest eigengap of the normalised graph Laplacian (von Luxburg 2007)
     clustering          kernel non-negative spectral clustering (KNSC) with the normalised cut (Ncut, default) or
-                        the ratio cut (Rcut); Tolic, Antulov-Fantulin & Kopriva (2018), Pattern Recognition 82,
+                        the ratio cut (Rcut); Tolić, Antulov-Fantulin & Kopriva (2018), Pattern Recognition 82,
                         40-55, doi:10.1016/j.patcog.2018.04.029
-The update rules and the notation follow the KNSC implementation in SI-Scientist (github.com/singularity4/SI-Scientist):
-H is the cluster indicator matrix, K the kernel matrix and D_inv_sqrt = D^(-1/2), where D is the degree matrix of K.
+Notation: H is the cluster indicator matrix, K the kernel matrix and D_inv_sqrt = D^(-1/2), where D is the degree
+matrix of K.
 """
 import numpy as np
 from scipy.linalg import eigh
 from scipy.spatial.distance import pdist, squareform
 
 EPS = 1e-12
-ALPHA = 10.0      # weight of the kernel reconstruction term (SI-Scientist default)
-MU = 100.0        # weight of the orthogonality penalty ||H H' - I||^2 (SI-Scientist default)
+ALPHA = 10.0      # weight of the kernel reconstruction term
+MU = 100.0        # weight of the orthogonality penalty ||H H' - I||^2
 
 
 # ================================================================ KNSC update rules and objectives
@@ -87,7 +86,7 @@ def labels(clustering_matrix):
 def gaussian_kernel(coordinates_mm):
     """Compute the Gaussian kernel matrix of the voxel coordinates.
 
-    Choice: sigma is the median pairwise distance between voxels (median heuristic), so the kernel width scales with
+    The kernel width sigma is the median pairwise distance between voxels (median heuristic), so the kernel width scales with
     the cluster size without parameter tuning.
     """
     distances = pdist(coordinates_mm, metric="euclidean")
@@ -102,7 +101,7 @@ def gaussian_kernel(coordinates_mm):
 def number_of_parts_by_eigengap(kernel, max_parts):
     """Estimate the number of clusters with the eigengap heuristic.
 
-    Choice: the number of clusters is the position of the largest gap between consecutive eigenvalues of the symmetric
+    The number of clusters is the position of the largest gap between consecutive eigenvalues of the symmetric
     normalised Laplacian L = I - D^(-1/2) K D^(-1/2), between 1 and max_parts (von Luxburg 2007). An estimate of 1
     leaves the cluster undivided.
     """
