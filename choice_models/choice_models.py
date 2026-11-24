@@ -3,17 +3,15 @@ noise (nu1).
 
 Behavioural data: risk_experiment/paper/behavioral_data in github.com/gilles86/risk_experiment (sub-XX_behavior.tsv).
 
-RNP   hierarchical Bayesian probit model 'probit_simple' of de Hollander et al. (Methods, eq. 9-10;
-      cogmodels/fit_probit.py):
+RNP   hierarchical Bayesian probit model 'probit_simple' of de Hollander et al. (Methods, eq. 9-10):
           chose_risky ~ x + (x | subject),   x = log(n_risky / n_safe),   Bambi default priors, per session
       RNP = clip(exp(intercept / slope), 0, 1) for each participant and posterior draw.
-      Choice: RNP is the measure of risk attitude, as in de Hollander et al.: the safe/risky payoff ratio at which a
+      RNP is the measure of risk attitude, as in de Hollander et al.: the safe/risky payoff ratio at which a
       participant is indifferent, which equals the winning probability at which a risk-neutral decision maker would be
       indifferent. The true winning probability is 0.55; RNP = 0.55 indicates risk neutrality, lower values indicate
       risk aversion and higher values risk seeking.
-nu1   perceptual magnitude-comparison model (PMCM), model 1 of de Hollander et al. (cogmodels/fit_model.py:
-      RiskModel(data, 'full')), fitted per session as in revision/refit_per_session.py.
-      Choice: nu1, the noise of the first-payoff magnitude representation, is the PMCM parameter used in this study.
+nu1   perceptual magnitude-comparison model (PMCM), model 1 of de Hollander et al., fitted per session.
+      nu1, the noise of the first-payoff magnitude representation, is the PMCM parameter used in this study.
 The compare step compares both measures with the source data published by the authors and writes
 choice_model_fits.tsv.
 
@@ -148,7 +146,7 @@ def fit_nu1(behaviour_folder, out, draws=3000, tune=1500, chains=4):
     trials = read_behaviour(behaviour_folder)
     trials = trials[trials["choice"].notna()].copy()
     trials["p1"], trials["p2"] = trials["prob1"].astype(float), trials["prob2"].astype(float)
-    trials["choice"] = trials["choice"].astype(float) == 2.0          # as in the authors' fit_model.get_data
+    trials["choice"] = trials["choice"].astype(float) == 2.0          # as in de Hollander et al.
     for session in SESSIONS:
         session_trials = trials[trials["session"] == session].set_index(["subject", "run", "trial_nr"])
         model = RiskModel(session_trials[["n1", "n2", "p1", "p2", "choice"]], "full")
@@ -199,7 +197,7 @@ def compare(out, source_data, draws=3000):
     comparison = rnp.pivot(index="subject", columns="session", values="rnp_mean").join(
         authors_profiles.rename("authors_risk_profile"))
     report += [f"RNP: participants {len(comparison)}; r(ours 3T, ours 7T) = {comparison[['3t2', '7t2']].corr().iloc[0, 1]:.3f}",
-               "mean RNP ours 3T %.3f, 7T %.3f; authors' group-level RNP %.3f"
+               "mean RNP refitted 3T %.3f, 7T %.3f; authors' group-level RNP %.3f"
                % (comparison["3t2"].mean(), comparison["7t2"].mean(), authors_group_rnp)]
     comparison.to_csv(out / "rnp_vs_authors.tsv", sep="\t")
     our_profiles = rnp.groupby("subject")["risk_profile"].agg(lambda profiles: "/".join(sorted(set(profiles))))
@@ -220,7 +218,7 @@ def compare(out, source_data, draws=3000):
     authors_correlations.index = authors_correlations.columns = parameters
     report += ["", f"nu1 (PMCM model 1, per session): n = {len(both_sessions)} participants in both sessions; "
                f"group mean nu1 3T {parameters_3t['nu1'].mean():.3f}, 7T {parameters_7t['nu1'].mean():.3f}",
-               "3T-7T correlation of the same parameter (diagonal of the authors' Fig. S6), ours vs authors:"]
+               "3T-7T correlation of the same parameter (diagonal of the authors' Fig. S6), refitted vs authors:"]
     report += [f"  {parameter:<18} {our_correlations.loc[parameter, parameter]:.3f}   "
                f"{authors_correlations.loc[parameter, parameter]:.3f}" for parameter in parameters]
     difference = (our_correlations - authors_correlations).abs()
